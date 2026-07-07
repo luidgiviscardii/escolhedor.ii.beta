@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escolhedor de Preços — Idioma Independente</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef2f8; min-height: 100vh; }
+
+.tabs { display: flex; background: #1a3a7a; }
+.tab-btn { flex: 1; padding: 14px; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.tab-btn.active { color: #fff; border-bottom-color: #cc2222; }
+
+.tab-content { display: none; padding: 1.25rem 1rem 2rem; max-width: 1100px; margin: 0 auto; }
+.tab-content.active { display: block; }
+#tab-escolhedor.active { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+#tab-escolhedor .col-left { min-width: 0; }
+#tab-escolhedor .col-right { min-width: 0; position: sticky; top: 1rem; }
+@media (max-width: 700px) {
+  #tab-escolhedor.active { display: block; }
+  #tab-escolhedor .col-right { position: static; }
+}
+
+.logo { text-align: center; margin-bottom: 1rem; }
+.logo h1 { font-size: 1.4rem; font-weight: 700; color: #1a3a7a; }
+.logo span { color: #cc2222; }
+.logo p { font-size: 0.75rem; color: #5a6a8a; margin-top: 3px; letter-spacing: 1px; text-transform: uppercase; }
+
+.instructions { background: #fff; border-radius: 12px; border-left: 4px solid #1a3a7a; padding: 1rem 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 2px 10px rgba(26,58,122,0.07); }
+.instructions h3 { font-size: 0.72rem; font-weight: 700; color: #1a3a7a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.6rem; }
+.instructions ol { padding-left: 1.1rem; }
+.instructions li { font-size: 0.8rem; color: #3a4a6a; line-height: 1.6; margin-bottom: 3px; }
+.instructions li strong { color: #1a3a7a; }
+
+.card { background: #fff; border-radius: 14px; box-shadow: 0 4px 20px rgba(26,58,122,0.09); padding: 1.25rem; margin-bottom: 1rem; }
+.section-title { font-size: 0.68rem; font-weight: 700; color: #1a3a7a; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.65rem; }
+.toggle-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.toggle-btn { flex: 1; min-width: 70px; padding: 8px 6px; border: 1.5px solid #d0d8e8; border-radius: 9px; background: #f5f8ff; color: #5a6a8a; font-size: 0.77rem; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.18s; line-height: 1.3; }
+.toggle-btn.active { background: #1a3a7a; color: #fff; border-color: #1a3a7a; }
+.toggle-btn.active.red { background: #cc2222; border-color: #cc2222; }
+.divider { border: none; border-top: 1px solid #eef2f8; margin: 1rem 0; }
+
+#cupom-input, #lead-context, #lead-name { width: 100%; padding: 9px 14px; border: 1.5px solid #d0d8e8; border-radius: 9px; font-size: 0.9rem; color: #1a3a7a; background: #f5f8ff; outline: none; margin-top: 8px; font-family: inherit; }
+#cupom-input:focus, #lead-context:focus, #lead-name:focus { border-color: #1a3a7a; }
+#lead-context { min-height: 62px; resize: vertical; line-height: 1.4; }
+.field-hint { color: #5a6a8a; font-size: 0.72rem; line-height: 1.4; margin-top: 6px; }
+.chooser-section.hidden { display: none; }
+.mode-highlight { background: #f7f9fe; border: 1.5px solid #dce5f6; border-radius: 12px; padding: 0.95rem; margin-bottom: 1rem; }
+.mode-highlight .section-title { margin-bottom: 0.75rem; }
+#cupom-aviso { display: none; color: #cc2222; font-size: 0.75rem; font-weight: 600; margin-top: 5px; }
+
+.msg-preview { background: #f5f8ff; border-radius: 9px; padding: 1rem; font-size: 0.8rem; color: #1a3a7a; white-space: pre-wrap; line-height: 1.65; border: 1.5px solid #d0d8e8; max-height: 420px; overflow-y: auto; }
+.copy-btn { margin-top: 0.75rem; width: 100%; padding: 13px; background: #25D366; color: #fff; border: none; border-radius: 9px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.copy-btn:hover { opacity: 0.88; }
+.copied { text-align: center; font-size: 0.78rem; color: #25D366; font-weight: 600; margin-top: 6px; opacity: 0; transition: opacity 0.3s; }
+
+.preview-card { background: #1a3a7a; border-radius: 13px; padding: 1.1rem; color: #fff; }
+.pre-title { font-size: 0.65rem; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.plan-row { background: rgba(255,255,255,0.1); border-radius: 8px; padding: 9px 12px; margin-bottom: 6px; }
+.plan-row.best { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); }
+.plan-row.warn { background: rgba(204,34,34,0.15); border: 1px solid rgba(204,34,34,0.3); }
+.plan-title { font-size: 0.7rem; font-weight: 700; opacity: 0.85; margin-bottom: 4px; text-transform: uppercase; }
+.plan-line { font-size: 0.78rem; opacity: 0.9; padding: 1px 0; }
+.best-badge { display: inline-block; background: #cc2222; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 1px 6px; border-radius: 20px; margin-left: 4px; vertical-align: middle; }
+.warn-text { font-size: 0.7rem; opacity: 0.8; margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.15); font-style: italic; }
+
+/* ADMIN */
+.admin-content { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 2rem; }
+.admin-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(26,58,122,0.08); margin-bottom: 1.5rem; font-size: 12px; }
+th { background: #1a3a7a; color: #fff; padding: 9px 10px; text-align: center; font-size: 11px; font-weight: 600; }
+th.left { text-align: left; }
+td { padding: 6px 9px; border-bottom: 1px solid #eef2f8; text-align: center; color: #1a3a7a; vertical-align: middle; }
+td.lbl { text-align: left; font-weight: 600; background: #f5f8ff; white-space: pre-line; }
+td.sub { text-align: left; color: #5a6a8a; background: #f9fbff; padding-left: 14px; font-size: 11px; }
+td input.val { width: 64px; padding: 3px 5px; border: 1.5px solid #d0d8e8; border-radius: 5px; font-size: 11px; color: #1a3a7a; text-align: center; background: #fff; display: block; margin: 0 auto 2px; }
+td input.val:focus { border-color: #1a3a7a; outline: none; }
+td input.val.mirrored { background: #f0f4ff; color: #7a8abf; border-color: #b0bcdf; }
+td .al { font-size: 9px; color: #9aaac8; display: block; }
+td.risc { color: #999; font-size: 10px; }
+tr.gh td { background: #1a3a7a; color: #fff; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; padding: 9px 13px; }
+tr.gh td:hover { background: #15306a; }
+tr.collapsed { display: none; }
+.save-btn { padding: 10px 22px; background: #1a3a7a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 1rem; }
+.save-btn:hover { opacity: 0.88; }
+.save-ok { font-size: 12px; color: #25D366; font-weight: 600; margin-left: 10px; opacity: 0; transition: opacity 0.3s; }
+.promo-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(26,58,122,0.08); padding: 1.25rem; margin-bottom: 1rem; }
+.promo-card h3 { font-size: 12px; font-weight: 700; color: #1a3a7a; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+.promo-row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: start; margin-bottom: 8px; }
+.promo-row label { font-size: 11px; font-weight: 600; color: #5a6a8a; padding-top: 6px; }
+.promo-row textarea { width: 100%; padding: 6px 9px; border: 1.5px solid #d0d8e8; border-radius: 7px; font-size: 11px; color: #1a3a7a; resize: vertical; min-height: 48px; font-family: inherit; }
+.promo-row textarea:focus { border-color: #1a3a7a; outline: none; }
+
+/* Admin access */
+.admin-access { text-align: right; padding: 4px 12px; background: #1a3a7a; }
+.admin-access a { font-size: 11px; color: rgba(255,255,255,0.3); text-decoration: none; cursor: pointer; }
+.admin-access a:hover { color: rgba(255,255,255,0.7); }
+</style>
+</head>
+<body>
+
+<div class="admin-access"><a onclick="toggleAdmin()">⚙️ admin</a></div>
+
+<div id="tab-escolhedor" class="tab-content active">
+  <div class="col-left">
+    <div class="logo">
+      <h1>Idioma <span>Independente</span></h1>
+      <p>Escolhedor de Preços</p>
+    </div>
+    <div class="instructions">
+      <h3>📋 Como usar</h3>
+      <ol>
+        <li>Selecione todos os quadrados de acordo com o valor a ser enviado.</li>
+        <li>Clique em <strong>Influencer</strong> e adicione o cupom referente ao cadastro dele.</li>
+        <li>Clique em <strong>Copiar Mensagem para WhatsApp</strong> e envie os valores para o lead.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="mode-highlight">
+        <div class="section-title">Tipo de escolhedor</div>
+        <div class="toggle-group" id="modo-group">
+          <button class="toggle-btn active" data-val="perfil">Separar por Perfil/objetivo do lead</button>
+          <button class="toggle-btn" data-val="pacotes">Separar por pacotes</button>
+        </div>
+      </div>
+      <div class="section-title">Idioma</div>
+      <div class="toggle-group" id="idioma-group">
+        <button class="toggle-btn active" data-ii="0" data-emoji="🇺🇸🇬🇧" data-label="Inglês">🇺🇸 Inglês</button>
+        <button class="toggle-btn" data-ii="0" data-emoji="🇪🇸🇲🇽" data-label="Espanhol">🇪🇸 Espanhol</button>
+        <button class="toggle-btn" data-ii="1" data-emoji="🇫🇷" data-label="Francês">🇫🇷 Francês</button>
+        <button class="toggle-btn" data-ii="2" data-emoji="🇩🇪" data-label="Alemão">🇩🇪 Alemão</button>
+        <button class="toggle-btn" data-ii="2" data-emoji="🇮🇹" data-label="Italiano">🇮🇹 Italiano</button>
+        <button class="toggle-btn" data-ii="2" data-emoji="🌍" data-label="Outro idioma">🌍 Outros</button>
+      </div>
+      <div id="tipo-section" class="chooser-section hidden">
+        <hr class="divider">
+        <div class="section-title">Tipo de curso</div>
+        <div class="toggle-group" id="tipo-group">
+          <button class="toggle-btn active" data-pi="0" data-emoji="📚" data-label="Normal">📚 Normal</button>
+          <button class="toggle-btn" data-pi="1" data-emoji="💼" data-label="Business">💼 Business</button>
+          <button class="toggle-btn" data-pi="1" data-emoji="👦" data-label="Kids & Teens">👦 Kids & Teens</button>
+          <button class="toggle-btn red" data-pi="2" data-emoji="🎓" data-label="Prova de Proficiência" id="btn-prof">🎓 Prova de Proficiência</button>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Turma</div>
+      <div class="toggle-group" id="turma-group">
+        <button class="toggle-btn active" data-mt="1" data-label="Particular">Particular</button>
+        <button class="toggle-btn" data-mt="0.75" data-label="Dupla">Dupla</button>
+        <button class="toggle-btn" data-mt="0.66" data-label="Trio">Trio</button>
+        <button class="toggle-btn" data-mt="0.56" data-label="Quarteto">Quarteto</button>
+        <button class="toggle-btn" data-mt="0.5" data-label="Cinco+">Cinco+</button>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Cupom</div>
+      <div class="toggle-group" id="cupom-group">
+        <button class="toggle-btn" data-val="indicacao">Cupom INDICAÇÃO</button>
+        <button class="toggle-btn active" data-val="influencer">Influencer</button>
+        <button class="toggle-btn" data-val="sem_desconto">Lead não confirmou<br><small style="font-size:0.65rem">Só valores riscados</small></button>
+      </div>
+      <div id="cupom-input-wrap">
+        <input type="text" id="cupom-input" placeholder="Digite o cupom do influencer..." />
+        <div id="cupom-aviso">⚠️ INSIRA O CUPOM DO INFLUENCER</div>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Horário</div>
+      <div class="toggle-group" id="horario-group">
+        <button class="toggle-btn active" data-val="0">🕐 Horários Comuns<br><small style="font-size:0.68rem;font-weight:400">9h – 17h</small></button>
+        <button class="toggle-btn" data-val="20">⭐ Prime Time<br><small style="font-size:0.68rem;font-weight:400">7h/8h, 18h–22h e Fim de Semana</small></button>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Nome do lead</div>
+      <input type="text" id="lead-name" placeholder="Ex.: Maria" />
+      <hr class="divider">
+      <div id="perfil-section" class="chooser-section">
+        <div class="section-title">Perfil / Objetivo do lead</div>
+        <div class="toggle-group" id="perfil-group">
+          <button class="toggle-btn active" data-val="iniciante">Iniciante ou travado</button>
+          <button class="toggle-btn" data-val="intermediario">Intermediário</button>
+          <button class="toggle-btn" data-val="avancado">Avançado</button>
+          <button class="toggle-btn" data-val="fluencia">Quer fluência</button>
+          <button class="toggle-btn" data-val="preco">Preço baixo</button>
+          <button class="toggle-btn" data-val="urgencia">Urgência</button>
+        </div>
+      </div>
+      <textarea id="lead-context" placeholder="Ex.: quer sair do básico, tem vergonha de falar e consegue estudar 1x por semana"></textarea>
+      <div class="field-hint">Vai aparecer como o objetivo que o lead passou.</div>
+      <hr class="divider">
+      <div id="pacotes-section" class="chooser-section hidden">
+        <div class="section-title">Pacotes a exibir</div>
+        <div class="toggle-group" id="pacotes-group">
+          <button class="toggle-btn active" data-val="main">1, 2 e 3 anos</button>
+          <button class="toggle-btn" data-val="all">Incluir 6 meses ⚠️ só avançados</button>
+        </div>
+        <hr class="divider">
+        <div class="section-title">Frequência na mensagem</div>
+        <div class="toggle-group" id="freq-group">
+          <button class="toggle-btn active" data-val="12">1x e 2x na semana</button>
+          <button class="toggle-btn" data-val="123">Incluir 3x na semana</button>
+          <button class="toggle-btn" data-val="345">Intensivos<br><small style="font-size:0.65rem">3x, 4x e 5x na semana</small></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div class="card">
+      <div class="section-title">Mensagem 1 - recomendação</div>
+      <div class="msg-preview" id="msg-preview"></div>
+      <button class="copy-btn" onclick="copyMsg('main')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.142 1.535 5.9L.057 23.57a.75.75 0 00.906.919l5.857-1.53A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.699-.504-5.25-1.385l-.372-.213-3.844 1.004 1.026-3.733-.232-.381A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        Copiar Recomendação
+      </button>
+      <hr class="divider">
+      <div class="section-title">Mensagem 2 - detalhes</div>
+      <div class="msg-preview" id="details-preview"></div>
+      <button class="copy-btn" onclick="copyMsg('details')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.142 1.535 5.9L.057 23.57a.75.75 0 00.906.919l5.857-1.53A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.699-.504-5.25-1.385l-.372-.213-3.844 1.004 1.026-3.733-.232-.381A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        Copiar Detalhes
+      </button>
+      <div class="copied" id="copied-msg">✓ Copiado!</div>
+    </div>
+    <div class="preview-card">
+      <div class="pre-title">Prévia dos pacotes</div>
+      <div id="result-plans"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN (oculto) -->
+<div id="tab-admin" class="tab-content">
+  <div class="admin-content">
+    <button class="save-btn" onclick="saveAdmin()">💾 Salvar alterações</button>
+    <span class="save-ok" id="save-ok">✓ Salvo!</span>
+    <div class="promo-card">
+      <h3>🎁 Promos e Bônus por Mês</h3>
+      <div id="promo-fields"></div>
+    </div>
+    <div class="admin-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="left" rowspan="2">Idioma / Pacote</th>
+            <th class="left" rowspan="2">Freq.</th>
+            <th colspan="2">6 meses (6x)</th>
+            <th colspan="2">1 ano (12x)</th>
+            <th colspan="2">2 anos (24x)</th>
+            <th colspan="2">3 anos (36x)</th>
+          </tr>
+          <tr>
+            <th>Real</th><th>+30%</th>
+            <th>Real</th><th>+30%</th>
+            <th>Real</th><th>+30%</th>
+            <th>Real</th><th>+30%</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const PROMO_DATA = [
+  { titulo:'Promoção de Início de Ano - Condições especiais válidas até 30/01!', bonus:'*BÔNUS DE JANEIRO*: Planilha SMART automatizada para você mensurar seu progresso no idioma' },
+  { titulo:'Promoção de Carnaval - Condições especiais válidas até 28/02', bonus:'*BÔNUS DE FEVEREIRO:* 3 Vídeos para aprender com netflix + artigos científicos + Viagens' },
+  { titulo:'🎉 Promoção Ano novo brasileiro - Condições especiais válidas até 31/03!', bonus:'*BÔNUS DE MARÇO:* Passo a passo de configuração de conta de Youtube para aprender idiomas + Cronograma e rotina individual de estudos' },
+  { titulo:'Promoção de Páscoa - Condições especiais válidas até 30/04!', bonus:'*BÔNUS DE ABRIL:* Lista de perguntas mais importantes para você se "virar" em um idioma + Como fazer uma apresentação eficaz + Guia do aluno' },
+  { titulo:'Promoção Mês do trabalhador - Condições especiais válidas até 31/05!', bonus:'*BÔNUS DE MAIO*: Aprenda inglês com FRIENDS! 10 aulas exclusivas com FRIENDS direto no classroom + atividades bônus.' },
+  { titulo:'Promoção Fim de semestre - Condições especiais válidas até 30/06!', bonus:'*BÔNUS DE JUNHO*: Aprenda inglês com FRIENDS! 10 tarefas exclusivas com FRIENDS direto no classroom + atividades bônus.' },
+  { titulo:'Promoção Mês das férias escolares - Condições especiais válidas até 31/07!', bonus:'*BÔNUS DE JULHO:* Visiting US: Parks and daily life + Lista de frases úteis em viagens (pdf) + Duolingo test tips' },
+  { titulo:'Promoção Volta às aulas - Condições especiais válidas até 31/08!', bonus:'*BÔNUS DE AGOSTO:* Business English com The Office + cupom de desconto para dar de presente 10% em qlq idioma + 5 diálogos para aprender inglês' },
+  { titulo:'Mês da Independência no Idioma - Promoção válida até 30/09', bonus:'*BÔNUS DE SETEMBRO:* Prompt de estudo com o chat GPT + Curso de mindfulness completo + Cronograma de rotina individual de estudos' },
+  { titulo:'Promoção das Crianças - Condições especiais válidas até 31/10!', bonus:'🎁*GRATUITO - Somente em Outubro*: Destravando o Inglês: Do Básico à Confiança (Curso Completo Online com + de 100 aulas + 40 pdfs para Estudo)' },
+  { titulo:'Promoção de Novembro - Condições especiais válidas até 30/11!', bonus:'*BÔNUS DE NOVEMBRO*: Em breve!' },
+  { titulo:'Promoção de Dezembro - Condições especiais válidas até 31/12!', bonus:'*BÔNUS DE DEZEMBRO*: Em breve!' },
+];
+
+const DURACOES = [
+  { label:'6 meses', parc:6  },
+  { label:'1 ano',   parc:12 },
+  { label:'2 anos',  parc:24 },
+  { label:'3 anos',  parc:36 },
+];
+const FREQS = ['1x','2x','3x','4x','5x'];
+const AULAS_PACOTE = [
+  [24,  48,  96,  144],
+  [48,  96,  192, 288],
+  [72,  144, 288, 432],
+  [96,  192, 384, 576],
+  [120, 240, 480, 720],
+];
+const PLAN_META = [
+  { label:'6 Meses',  sublabel:'Somente para Alunos Avançados',   di:0, parc:6,  warn:true },
+  { label:'1 Ano',    sublabel:'Para Destravar o Segundo Idioma',  di:1, parc:12 },
+  { label:'2 Anos',   sublabel:'Do Seu Nível à Fluência',          di:2, parc:24, best:true },
+  { label:'3 Anos',   sublabel:'Do Básico à Fluência + Práticas',  di:3, parc:36 },
+];
+const IDIOMAS = [
+  { label:'Inglês / Espanhol', pacotes:[ {label:'Normal'}, {label:'Business / Kids & Teens'}, {label:'Prova de Proficiência'} ] },
+  { label:'Francês',           pacotes:[ {label:'Normal'}, {label:'Business / Kids & Teens\n+ Avançado'} ] },
+  { label:'Italiano / Alemão / Outros', pacotes:[ {label:'Normal'}, {label:'Business / Kids & Teens\n+ Avançado'} ] },
+];
+const MIRRORS = [{ from:[0,1], to:[1,0] }, { from:[1,1], to:[2,0] }];
+
+let PRICES = {
+  '0-0-0-0':297,   '0-0-0-1':267, '0-0-0-2':227,   '0-0-0-3':212,
+  '0-0-1-0':517, '0-0-1-1':467, '0-0-1-2':427, '0-0-1-3':417,
+  '0-0-2-0':720, '0-0-2-1':697, '0-0-2-2':597, '0-0-2-3':577,
+  '0-0-3-0':927, '0-0-3-1':897, '0-0-3-2':767, '0-0-3-3':742,
+  '0-0-4-0':927, '0-0-4-1':897, '0-0-4-2':767, '0-0-4-3':742,
+  '0-1-0-0':317, '0-1-0-1':297, '0-1-0-2':257, '0-1-0-3':244,
+  '0-1-1-0':617, '0-1-1-1':597, '0-1-1-2':577, '0-1-1-3':517,
+  '0-1-2-0':819, '0-1-2-1':790, '0-1-2-2':697, '0-1-2-3':657,
+  '0-1-3-0':1052, '0-1-3-1':1017, '0-1-3-2':897, '0-1-3-3':847,
+  '0-1-4-0':1052, '0-1-4-1':1017, '0-1-4-2':897, '0-1-4-3':847,
+  '0-2-0-0':437, '0-2-0-1':397, '0-2-0-2':314, '0-2-0-3':0,
+  '0-2-1-0':740, '0-2-1-1':697, '0-2-1-2':594, '0-2-1-3':0,
+  '0-2-2-0':890, '0-2-2-1':0,   '0-2-2-2':0,   '0-2-2-3':0,
+  '0-2-3-0':1147, '0-2-3-1':0,   '0-2-3-2':0,   '0-2-3-3':0,
+  '0-2-4-0':1147, '0-2-4-1':0,   '0-2-4-2':0,   '0-2-4-3':0,
+  '1-0-0-0':317, '1-0-0-1':297, '1-0-0-2':257, '1-0-0-3':244,
+  '1-0-1-0':617, '1-0-1-1':597, '1-0-1-2':577, '1-0-1-3':517,
+  '1-0-2-0':819, '1-0-2-1':790, '1-0-2-2':697, '1-0-2-3':657,
+  '1-0-3-0':1052, '1-0-3-1':1017, '1-0-3-2':897, '1-0-3-3':847,
+  '1-0-4-0':1052, '1-0-4-1':1017, '1-0-4-2':897, '1-0-4-3':847,
+  '1-1-0-0':427, '1-1-0-1':397, '1-1-0-2':314, '1-1-0-3':297,
+  '1-1-1-0':770, '1-1-1-1':734, '1-1-1-2':594, '1-1-1-3':570,
+  '1-1-2-0':990, '1-1-2-1':938, '1-1-2-2':780, '1-1-2-3':770,
+  '1-1-3-0':1272, '1-1-3-1':1207, '1-1-3-2':1002, '1-1-3-3':992,
+  '1-1-4-0':1272, '1-1-4-1':1207, '1-1-4-2':1002, '1-1-4-3':992,
+  '2-0-0-0':427, '2-0-0-1':397, '2-0-0-2':314, '2-0-0-3':297,
+  '2-0-1-0':770, '2-0-1-1':734, '2-0-1-2':594, '2-0-1-3':570,
+  '2-0-2-0':990, '2-0-2-1':938, '2-0-2-2':780, '2-0-2-3':770,
+  '2-0-3-0':1272, '2-0-3-1':1207, '2-0-3-2':1002, '2-0-3-3':992,
+  '2-0-4-0':1272, '2-0-4-1':1207, '2-0-4-2':1002, '2-0-4-3':992,
+  '2-1-0-0':0,   '2-1-0-1':0,   '2-1-0-2':0,   '2-1-0-3':0,
+  '2-1-1-0':0,   '2-1-1-1':0,   '2-1-1-2':0,   '2-1-1-3':0,
+  '2-1-2-0':0,   '2-1-2-1':0,   '2-1-2-2':0,   '2-1-2-3':0,
+  '2-1-3-0':0,   '2-1-3-1':0,   '2-1-3-2':0,   '2-1-3-3':0,
+  '2-1-4-0':0,   '2-1-4-1':0,   '2-1-4-2':0,   '2-1-4-3':0,
+};
+
+const state = {
+  ii: 0, pi: 0, mt: 1, turmaLabel: 'Particular',
+  pkg: 'main', fq: '12', perfil: 'iniciante', modo: 'perfil', cupom: 'influencer',
+  idiomaEmoji: '🇺🇸🇬🇧', idiomaLabel: 'Inglês',
+  tipoEmoji: '📚', tipoLabel: 'Normal',
+  horario: 0
+};
+const latestMessages = { main: '', details: '' };
+
+function smartRound(val) {
+  if (val <= 0) return 0;
+  const r = Math.round(val);
+  const floor10 = Math.floor(r / 10) * 10;
+  const candidates = [floor10 - 3, floor10 + 2, floor10 + 7, floor10 + 12].filter(v => v > 0);
+  return candidates.reduce((best, v) => Math.abs(v - r) < Math.abs(best - r) ? v : best, candidates[0]);
+}
+function fmtBRL(v) { return 'R$ ' + v.toLocaleString('pt-BR'); }
+function getPrice(ii, pi, fi, di) { return PRICES[`${ii}-${pi}-${fi}-${di}`] || 0; }
+function getCourseTypeIndex() {
+  if (state.modo === 'perfil') return state.perfil === 'avancado' ? 1 : 0;
+  return state.pi;
+}
+function applyTurma(base) {
+  const v = state.mt === 1 ? base : smartRound(base * state.mt);
+  return v + state.horario;
+}
+function getFreqs() {
+  if (state.fq === '12') return [0,1];
+  if (state.fq === '123') return [0,1,2];
+  return [2,3,4];
+}
+function planByDi(di) { return PLAN_META.find(p => p.di === di); }
+function freqText(fi) {
+  return ['uma vez na semana', 'duas vezes na semana', 'três vezes na semana', 'quatro vezes na semana', 'cinco vezes na semana'][fi] || `${fi+1}x na semana`;
+}
+function getOfferOptions(rec, limit = 4) {
+  const options = [];
+  const planIds = rec.plans.filter(di => planByDi(di));
+  const freqIds = rec.freqs;
+  const add = (di, fi) => {
+    if (options.some(o => o.di === di && o.fi === fi)) return;
+    const plan = planByDi(di);
+    const base = getPrice(state.ii, getCourseTypeIndex(), fi, di);
+    if (!plan || !base) return;
+    const real = applyTurma(base);
+    options.push({
+      di, fi, plan, real,
+      risc: Math.round(real * 1.3),
+      role: rec.roles[di] || (di === rec.mainDi ? 'Minha sugestão' : 'Outra opção')
+    });
+  };
+
+  planIds.forEach(di => add(di, freqIds[0]));
+  if (freqIds.length > 1) planIds.forEach(di => add(di, freqIds[1]));
+  for (let i = 2; i < freqIds.length; i++) planIds.forEach(di => add(di, freqIds[i]));
+  return options.slice(0, limit);
+}
+function getLeadContext() {
+  return document.getElementById('lead-context').value.trim();
+}
+function getLeadName() {
+  return document.getElementById('lead-name').value.trim() || 'Fulano';
+}
+function getRecommendation() {
+  const manualPlans = state.pkg === 'main' ? [1,2,3] : [0];
+  const manualFreqs = getFreqs();
+  if (state.modo === 'pacotes') {
+    return {
+      plans: manualPlans, freqs: manualFreqs, mainDi: manualPlans[0] || 1,
+      lead: 'o objetivo que você me passou',
+      intro: '',
+      roles: {}
+    };
+  }
+  const map = {
+    iniciante: {
+      plans: [2,1,3], freqs: [0,1], mainDi: 2,
+      lead: 'você quer sair do básico com consistência',
+      intro: 'eu te recomendaria principalmente o plano de 2 anos. Ele costuma ser o melhor equilíbrio entre tempo de acompanhamento, evolução e valor mensal.',
+      roles: { 2:'Minha recomendação principal', 1:'Alternativa mais econômica', 3:'Plano mais completo' }
+    },
+    intermediario: {
+      plans: [1,2], freqs: [0,1], mainDi: 1,
+      lead: 'você já tem alguma base e quer ganhar mais segurança',
+      intro: 'eu deixaria duas opções bem objetivas: 1 ano para evoluir com foco e 2 anos se você quiser um acompanhamento mais completo até a fluência.',
+      roles: { 1:'Opção mais direta', 2:'Melhor custo-benefício' }
+    },
+    avancado: {
+      plans: [0,1], freqs: [0,1], mainDi: 1,
+      lead: 'você já está em um nível mais avançado',
+      intro: 'eu não te indicaria um pacote muito longo logo de cara. Faz mais sentido um plano direto, focado em lapidar conversação, vocabulário e segurança.',
+      roles: { 0:'Opção mais curta', 1:'Minha recomendação' },
+      noteDi: 2,
+      note: 'Também existe a opção de 2 anos, que fica mais em conta no valor mensal, caso você queira manter acompanhamento por mais tempo.'
+    },
+    fluencia: {
+      plans: [2,3], freqs: [0,1], mainDi: 2,
+      lead: 'seu objetivo é chegar na fluência com acompanhamento',
+      intro: 'eu focaria nos pacotes mais completos. O de 2 anos já atende muito bem, e o de 3 anos é a alternativa para quem quer construir o caminho com mais prática e tempo.',
+      roles: { 2:'Minha recomendação principal', 3:'Alternativa mais completa' }
+    },
+    preco: {
+      plans: [1,2], freqs: [0], mainDi: 1,
+      lead: 'você quer começar com o menor investimento possível',
+      intro: 'eu evitaria te mandar muitas opções e focaria no formato de 1x por semana, que mantém o valor mais leve sem perder acompanhamento.',
+      roles: { 1:'Menor investimento', 2:'Valor mensal mais vantajoso' }
+    },
+    urgencia: {
+      plans: [0,1,2], freqs: [1,2], mainDi: 1,
+      lead: 'você tem urgência para evoluir',
+      intro: 'eu olharia para 2x ou 3x por semana. Assim você ganha mais contato com o idioma e acelera a evolução sem precisar fechar um plano longo demais.',
+      roles: { 0:'Arranque rápido', 1:'Minha recomendação', 2:'Mais completo e ainda acelerado' }
+    },
+    velocidade: {
+      plans: [0,1,2], freqs: [1,2], mainDi: 1,
+      lead: 'você tem urgência para evoluir',
+      intro: 'eu olharia para 2x ou 3x por semana. Assim você ganha mais contato com o idioma e acelera a evolução sem precisar fechar um plano longo demais.',
+      roles: { 0:'Arranque rápido', 1:'Minha recomendação', 2:'Mais completo e ainda acelerado' }
+    },
+    manual: {
+      plans: manualPlans, freqs: manualFreqs, mainDi: 2,
+      lead: 'essas são as opções disponíveis para o seu caso',
+      intro: 'separei os valores abaixo para você comparar com calma.',
+      roles: {}
+    }
+  };
+  return map[state.perfil] || map.iniciante;
+}
+
+function setupToggle(groupId, onChange) {
+  document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn);
+      render();
+    });
+  });
+}
+function activatePerfil(val) {
+  state.perfil = val;
+  document.querySelectorAll('#perfil-group .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === val);
+  });
+}
+function activateModo(val) {
+  state.modo = val;
+  document.querySelectorAll('#modo-group .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === val);
+  });
+  syncChooserMode();
+}
+function syncChooserMode() {
+  document.getElementById('tipo-section').classList.toggle('hidden', state.modo !== 'pacotes');
+  document.getElementById('perfil-section').classList.toggle('hidden', state.modo !== 'perfil');
+  document.getElementById('pacotes-section').classList.toggle('hidden', state.modo !== 'pacotes');
+}
+
+setupToggle('idioma-group', btn => {
+  state.ii = parseInt(btn.dataset.ii);
+  state.idiomaEmoji = btn.dataset.emoji;
+  state.idiomaLabel = btn.dataset.label;
+  // Francês/Italiano não têm Proficiência separada
+  const profBtn = document.getElementById('btn-prof');
+  if (state.ii !== 0) { profBtn.textContent = '🎓 Avançado / Especialização'; profBtn.classList.remove('red'); }
+  else { profBtn.textContent = '🎓 Prova de Proficiência'; profBtn.classList.add('red'); }
+});
+setupToggle('tipo-group', btn => {
+  state.pi = parseInt(btn.dataset.pi);
+  state.tipoEmoji = btn.dataset.emoji;
+  state.tipoLabel = btn.dataset.label;
+});
+setupToggle('turma-group', btn => { state.mt = parseFloat(btn.dataset.mt); state.turmaLabel = btn.dataset.label; });
+setupToggle('cupom-group', btn => {
+  state.cupom = btn.dataset.val;
+  document.getElementById('cupom-input-wrap').style.display = state.cupom === 'influencer' ? 'block' : 'none';
+  document.getElementById('cupom-aviso').style.display = 'none';
+});
+setupToggle('horario-group',  btn => { state.horario = parseInt(btn.dataset.val); });
+setupToggle('modo-group',     btn => { activateModo(btn.dataset.val); });
+setupToggle('perfil-group',   btn => { state.perfil = btn.dataset.val; });
+setupToggle('pacotes-group', btn => { state.pkg = btn.dataset.val; activateModo('pacotes'); });
+setupToggle('freq-group',    btn => { state.fq  = btn.dataset.val; activateModo('pacotes'); });
+
+document.getElementById('cupom-input').addEventListener('input', () => {
+  document.getElementById('cupom-aviso').style.display = 'none';
+  render();
+});
+document.getElementById('lead-context').addEventListener('input', render);
+document.getElementById('lead-name').addEventListener('input', render);
+
+function render() { renderPreview(); renderMsg(); }
+
+function renderPreview() {
+  const rec = getRecommendation();
+  const options = getOfferOptions(rec, 4);
+  const container = document.getElementById('result-plans');
+  container.innerHTML = '';
+  options.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'plan-row' + (opt.di === rec.mainDi ? ' best' : '') + (opt.plan.warn ? ' warn' : '');
+    div.innerHTML = `<div class="plan-title">${opt.role}</div>`
+      + `<div class="plan-line">Pacote de ${opt.plan.label.toLowerCase()}, ${freqText(opt.fi)}, por ${fmtBRL(opt.real)}/mês</div>`;
+    if (opt.plan.warn) div.innerHTML += `<div class="warn-text">⚠️ Confirme com seu mentor antes de enviar.</div>`;
+    container.appendChild(div);
+  });
+}
+
+function renderMsg() {
+  const { ii, mt, turmaLabel, cupom, idiomaEmoji, idiomaLabel, tipoEmoji, tipoLabel } = state;
+  const pi = getCourseTypeIndex();
+  const rec = getRecommendation();
+  const options = getOfferOptions(rec, 4);
+  const semDesconto = cupom === 'sem_desconto';
+  const cupomVal = cupom === 'influencer' ? (document.getElementById('cupom-input').value.trim() || '') : 'INDICAÇÃO';
+  const leadContext = getLeadContext();
+  const leadName = getLeadName();
+
+  let mainMsg = '';
+  let detailsMsg = '';
+  const courseLabel = `${idiomaLabel}${pi > 0 ? ` ${tipoLabel}` : ''}`;
+  const objectiveText = leadContext ? `com o objetivo de ${leadContext}` : 'com o objetivo que você me passou';
+  const cupomText = semDesconto ? '' : ` e o cupom *${cupomVal || 'INFLUENCER'}* aplicado`;
+
+  mainMsg += `${leadName}, seguinte, pensando no curso de *${courseLabel}* ${objectiveText}${cupomText}, separei alguns pacotes que acredito que façam sentido pra você:\n\n`;
+  options.forEach(opt => {
+    const priceText = semDesconto ? `fica no valor de ${fmtBRL(opt.risc)}/mês` : `fica de ~${fmtBRL(opt.risc)}~ por ${fmtBRL(opt.real)}/mês`;
+    mainMsg += `• Pacote de ${opt.plan.label.toLowerCase()}, ${freqText(opt.fi)}, ${priceText}.\n`;
+  });
+  mainMsg += '\n';
+
+  mainMsg += `Me diz qual dessas opções faz mais sentido para você?`;
+
+  detailsMsg += `Só para complementar: essa condição promocional fica válida até 31/07.\n\n`;
+  detailsMsg += `O pagamento pode ser feito em até 15 dias após o início, via boleto. E pode ficar tranquilo: não tem taxa de matrícula nem taxa de material, então o valor que te passei é o valor final mesmo.\n\n`;
+  detailsMsg += `As aulas são em formato ${turmaLabel.toLowerCase()} e você também recebe material personalizado na nossa plataforma.`;
+
+  latestMessages.main = mainMsg.trim();
+  latestMessages.details = detailsMsg.trim();
+  document.getElementById('msg-preview').textContent = latestMessages.main;
+  document.getElementById('details-preview').textContent = latestMessages.details;
+}
+
+function copyMsg(kind = 'main') {
+  if (state.cupom === 'influencer' && !document.getElementById('cupom-input').value.trim()) {
+    document.getElementById('cupom-aviso').style.display = 'block';
+    document.getElementById('cupom-input').focus();
+    return;
+  }
+  const txt = latestMessages[kind] || document.getElementById('msg-preview').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(showCopied).catch(() => fallbackCopy(txt));
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt) {
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); showCopied(); } catch(e) { alert('Não foi possível copiar. Por favor copie manualmente.'); }
+  document.body.removeChild(ta);
+}
+function showCopied() {
+  const el = document.getElementById('copied-msg');
+  el.style.opacity = '1'; setTimeout(() => el.style.opacity = '0', 2500);
+}
+
+// ADMIN toggle
+let adminVisible = false;
+function toggleAdmin() {
+  adminVisible = !adminVisible;
+  document.getElementById('tab-admin').style.display = adminVisible ? 'block' : 'none';
+}
+
+function isMirrorTarget(ii, pi) { return MIRRORS.some(m => m.to[0]===ii && m.to[1]===pi); }
+
+function buildPromoFields() {
+  const c = document.getElementById('promo-fields');
+  MESES.forEach((mes, i) => {
+    const row = document.createElement('div'); row.style.marginBottom = '1rem';
+    row.innerHTML = `<div style="font-size:11px;font-weight:700;color:#1a3a7a;margin-bottom:5px;text-transform:uppercase">${mes}</div>`;
+    ['titulo','bonus'].forEach(tipo => {
+      const r = document.createElement('div'); r.className = 'promo-row';
+      r.innerHTML = `<label>${tipo === 'titulo' ? 'Título' : 'Bônus'}</label>`;
+      const ta = document.createElement('textarea');
+      ta.id = `promo-${tipo}-${i}`; ta.value = PROMO_DATA[i][tipo];
+      r.appendChild(ta); row.appendChild(r);
+    });
+    c.appendChild(row);
+  });
+}
+
+function buildAdmin() {
+  const tbody = document.getElementById('admin-tbody');
+  tbody.innerHTML = '';
+  IDIOMAS.forEach((idioma, ii) => {
+    const hrow = document.createElement('tr'); hrow.className = 'gh';
+    const htd = document.createElement('td');
+    htd.colSpan = 2 + DURACOES.length * 2;
+    htd.textContent = '▾ ' + idioma.label;
+    htd.addEventListener('click', () => {
+      const open = htd.textContent.startsWith('▾');
+      htd.textContent = (open ? '▸ ' : '▾ ') + idioma.label;
+      tbody.querySelectorAll(`.gr-${ii}`).forEach(r => r.classList.toggle('collapsed', open));
+    });
+    hrow.appendChild(htd); tbody.appendChild(hrow);
+    idioma.pacotes.forEach((pacote, pi) => {
+      FREQS.forEach((freq, fi) => {
+        const row = document.createElement('tr'); row.className = `gr-${ii}`;
+        if (fi === 0) {
+          const ltd = document.createElement('td');
+          ltd.className = 'lbl'; ltd.rowSpan = FREQS.length;
+          ltd.textContent = pacote.label; row.appendChild(ltd);
+        }
+        const ftd = document.createElement('td'); ftd.className = 'sub'; ftd.textContent = freq+'x'; row.appendChild(ftd);
+        DURACOES.forEach((_, di) => {
+          const key = `${ii}-${pi}-${fi}-${di}`;
+          const pre = PRICES[key] || 0;
+          const mirror = isMirrorTarget(ii, pi);
+          const realTd = document.createElement('td');
+          const inp = document.createElement('input');
+          inp.type = 'number'; inp.placeholder = '0'; inp.id = 'adm-' + key;
+          inp.className = 'val' + (mirror ? ' mirrored' : '');
+          if (pre) inp.value = pre;
+          inp.addEventListener('input', () => {
+            const v = parseFloat(inp.value) || 0;
+            document.getElementById('ar-' + key).textContent = v ? 'R$' + Math.round(v * 1.3) : '—';
+            MIRRORS.forEach(m => {
+              if (m.from[0]===ii && m.from[1]===pi) {
+                const tk = `${m.to[0]}-${m.to[1]}-${fi}-${di}`;
+                const ti = document.getElementById('adm-' + tk);
+                if (ti) { ti.value = inp.value; document.getElementById('ar-' + tk).textContent = v ? 'R$' + Math.round(v * 1.3) : '—'; }
+              }
+            });
+          });
+          const al = document.createElement('span'); al.className = 'al'; al.textContent = AULAS_PACOTE[fi][di] + ' aulas';
+          realTd.appendChild(inp); realTd.appendChild(al); row.appendChild(realTd);
+          const rTd = document.createElement('td'); rTd.className = 'risc'; rTd.id = 'ar-' + key;
+          rTd.textContent = pre ? 'R$' + Math.round(pre * 1.3) : '—'; row.appendChild(rTd);
+        });
+        tbody.appendChild(row);
+      });
+    });
+  });
+  MIRRORS.forEach(m => {
+    FREQS.forEach((_, fi) => { DURACOES.forEach((_, di) => {
+      const fk = `${m.from[0]}-${m.from[1]}-${fi}-${di}`, tk = `${m.to[0]}-${m.to[1]}-${fi}-${di}`;
+      const fe = document.getElementById('adm-' + fk), te = document.getElementById('adm-' + tk);
+      if (fe && te && fe.value && !te.value) { te.value = fe.value; const v = parseFloat(fe.value)||0; document.getElementById('ar-'+tk).textContent = v ? 'R$'+Math.round(v*1.3) : '—'; }
+    }); });
+  });
+}
+
+function saveAdmin() {
+  IDIOMAS.forEach((_, ii) => { _.pacotes.forEach((_, pi) => { FREQS.forEach((_, fi) => { DURACOES.forEach((_, di) => {
+    const key = `${ii}-${pi}-${fi}-${di}`;
+    const inp = document.getElementById('adm-' + key);
+    if (inp) PRICES[key] = parseFloat(inp.value) || 0;
+  }); }); }); });
+  MESES.forEach((_, i) => {
+    ['titulo','bonus'].forEach(tipo => {
+      const el = document.getElementById(`promo-${tipo}-${i}`);
+      if (el) PROMO_DATA[i][tipo] = el.value;
+    });
+  });
+  render();
+  const ok = document.getElementById('save-ok');
+  ok.style.opacity = '1'; setTimeout(() => ok.style.opacity = '0', 2500);
+}
+
+buildPromoFields();
+buildAdmin();
+render();
+</script>
+</body>
+</html>
